@@ -1,6 +1,15 @@
 History
 =======
 
+0.4 (2015-11-21)
+----------------
+   - Show and install only release updates by default (Rick Vause)
+   - Enable pre-release versions using the --pre flag (Rick Vause)
+
+0.3.7 (2015-10-06)
+------------------
+   - Redistribute pip-review as a standalone package (Julian Gonggrijp)
+
 0.3.4 (2013-05-27)
 ------------------
    - Fix bug where non-PyPI packages inside .pipignore broke things when

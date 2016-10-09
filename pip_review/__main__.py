@@ -37,7 +37,7 @@ try:
 except (ImportError, AttributeError):
     pass
 
-from pip._vendor.packaging import version as packaging_version
+from packaging import version as packaging_version
 
 
 def parse_args():
@@ -291,4 +291,8 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    try:
+        main()
+    except KeyboardInterrupt:
+        sys.stdout.write('\nAborted\n')
+        sys.exit(0)

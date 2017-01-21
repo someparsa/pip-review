@@ -6,7 +6,7 @@ from setuptools import setup
 
 
 def get_dependencies():
-    deps = ['packaging']
+    deps = ['packaging', 'pip']
     if sys.version_info < (2, 7):
         deps += ['argparse']
     return deps
@@ -14,7 +14,7 @@ def get_dependencies():
 
 setup(
     name='pip-review',
-    version='0.5',
+    version='0.5.1',
     url='https://github.com/jgonggrijp/pip-review',
     license='BSD',
     author='Vincent Driessen, Julian Gonggrijp',
@@ -55,6 +55,7 @@ setup(
         'Programming Language :: Python :: 3.3',
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: BSD License',

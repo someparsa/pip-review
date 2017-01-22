@@ -4,10 +4,8 @@ import re
 import argparse
 from functools import partial
 import logging
-import sys
 import json
-import pip
-import subprocess
+import sys
 try:
     import urllib2 as urllib_request  # Python2
 except ImportError:
@@ -82,6 +80,9 @@ def parse_args():
         '--editables', '-e', action='store_true', default=False,
         help='Also include editable packages in PyPI lookup')
     parser.add_argument(
+        '--user', '-u', action='store_true', default=False,
+        help='Only output packages installed in user-site.')
+    parser.add_argument(
         '--local', '-l', action='store_true', default=False,
         help='If in a virtualenv that has global access, do not output '
              'globally-installed packages')
@@ -146,7 +147,7 @@ def get_pkg_info(pkg_name, silent=False):
     return info
 
 
-def latest_version(pkg_name, prerelease=False, silent=False):
+def latest_version(pkg_name, pre_release=False, silent=False):
     try:
         info = get_pkg_info(pkg_name, silent=silent)
     except ValueError:
@@ -164,7 +165,7 @@ def latest_version(pkg_name, prerelease=False, silent=False):
                 key=packaging_version.parse
             )
         ]
-        if not prerelease:
+        if not pre_release:
             versions = [v for v in versions
                         if not packaging_version.parse(v).is_prerelease]
         version = versions[-1]
@@ -174,34 +175,25 @@ def latest_version(pkg_name, prerelease=False, silent=False):
     return parse_version(version), version
 
 
-def get_latest_versions(pkg_names, prerelease=False):
-    get_latest = partial(latest_version, prerelease=prerelease, silent=True)
+def get_latest_versions(pkg_names, pre_release=False):
+    get_latest = partial(latest_version, pre_release=pre_release, silent=True)
     versions = map(get_latest, pkg_names)
     return zip(pkg_names, versions)
 
 
-def get_installed_pkgs(local=False):
-    logger = logging.getLogger(u'pip-review')
-    command = pip_cmd() + ['freeze']
-    if packaging_version.parse(pip.__version__) >= packaging_version.parse('8.0.3'):
-        command += ['--all']
+def get_installed_pkgs(local=False, user=False):
+    command = ['pip', 'list', '--format=json']
     if local:
-        command += ['--local']
+        command.append('--local')
+    if user:
+        command.append('--user')
 
-    output = check_output(command).decode('utf-8')
-
-    for line in output.splitlines():
-        if not line or line.startswith('##'):
-            continue
-
-        if line.startswith('-e'):
-            name = line.split('#egg=', 1)[1]
-            if name.endswith('-dev'):
-                name = name[:-4]
-            yield name, 'dev', 'dev', True
-        else:
-            name, version = line.split('==')
-            yield name, parse_version(version), version, False
+    output = check_output(" ".join(command)).decode('utf-8').strip()
+    packages = json.loads(output)
+    for package in packages:
+        name = package["name"]
+        version = package["version"]
+        yield name, parse_version(version), version, False
 
 
 class StdOutFilter(logging.Filter):
@@ -283,7 +275,7 @@ def main():
                        'Are you sure? [y/n] '):
             raise SystemExit('Quitting')
 
-    installed = list(get_installed_pkgs(local=args.local))
+    installed = list(get_installed_pkgs(local=args.local,user=args.user))
     lookup_on_pypi = [name for name, _, _, editable in installed
                       if not editable or args.editables]
     latest_versions = dict(get_latest_versions(lookup_on_pypi, args.pre))

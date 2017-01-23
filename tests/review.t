@@ -14,10 +14,6 @@ Setup. Let's pretend we have some outdated package versions installed:
 
   $ pip install python-dateutil==1.5 >/dev/null 2>&1
 
-Also install library, which caused warning message:
-
-  $ pip install http://www.effbot.org/media/downloads/cElementTree-1.0.5-20051216.tar.gz >/dev/null 2>&1
-
 Define a filter to strip the deprecation notice for Python 2.6:
 
   $ function strip_deprecation_notice {

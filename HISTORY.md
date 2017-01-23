@@ -1,6 +1,18 @@
 History
 =======
 
+0.5.1 (2017-01-21)
+------------------
+Please see the [release notes on GitHub](https://github.com/jgonggrijp/pip-review/releases/tag/0.5.1) for details about this release. The [GitHub release list](https://github.com/jgonggrijp/pip-review/releases) will be the single source of truth about releases from now on. This is the final version of this file; it will be removed in a future release.
+
+0.5 (2016-10-10)
+----------------
+   - Should work under Windows from now on
+   - Now also invokable as `python -m pip_review`
+   - Should be compatible with older version of pip
+   - Should be compatible with systems that don't include pip
+   - Lists Python 3 as supported on the Python Package Index
+
 0.4 (2015-11-21)
 ----------------
    - Show and install only release updates by default (Rick Vause)

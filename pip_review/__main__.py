@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import absolute_import
 import os
 import re
@@ -7,6 +6,7 @@ from functools import partial
 import logging
 import sys
 import json
+import pip
 try:
     import urllib2 as urllib_request  # Python2
 except ImportError:
@@ -154,12 +154,14 @@ def get_latest_versions(pkg_names, prerelease=False):
 def get_installed_pkgs(local=False):
     logger = logging.getLogger(u'pip-review')
     command = 'pip freeze'
+    if packaging_version.parse(pip.__version__) >= packaging_version.parse('8.0.3'):
+        command += ' --all'
     if local:
         command += ' --local'
 
     output = check_output(command).decode('utf-8')
 
-    for line in output.split('\n'):
+    for line in output.splitlines():
         if not line or line.startswith('##'):
             continue
 
@@ -227,7 +229,10 @@ ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
 def update_pkg(pkg, version):
-    os.system('pip install {0}=={1}'.format(pkg, version))
+    command = 'pip install {0}=={1}'.format(pkg, version)
+    if pkg=='pip':
+        command = 'python -m ' + command
+    os.system(command)
 
 
 def confirm(question):
@@ -267,7 +272,7 @@ def main():
         if raw_version is None:
             logger.warning('No update information found for {0}'.format(pkg))
             all_ok = False
-        elif raw_version != installed_raw_version:
+        elif parse_version(str(raw_version)) > parse_version(str(installed_raw_version)):
             if args.raw:
                 logger.info('{0}=={1}'.format(pkg, latest_version))
             else:

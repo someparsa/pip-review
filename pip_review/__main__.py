@@ -261,6 +261,35 @@ def confirm(question):
         answer = answer.strip().lower()
     return answer == 'y'
 
+def parse_legacy(pip_output):
+    packages = []
+    for line in pip_output.splitlines():
+        package = {}
+        line = line.split(" - ")
+        package['name'] = re.findall(r'^[a-zA-Z0-9\-]+', line[0])[0]
+        package['version'] = re.findall(r'\(([0-9a-zA-Z\.]+)\)', line[0])[0]
+        package['latest_version'] = re.findall(r'(^[0-9a-zA-Z\.]+)', line[1].split(":")[1].strip())[0]
+        packages.append(package)
+    return packages
+
+
+def get_outdated_packages(local=False, pre_release=False, user=False):
+    command = ['pip', 'list', '--outdated', '--disable-pip-version-check']
+    if local:
+        command.append('--local')
+    if pre_release:
+        command.append('--pre')
+    if user:
+        command.append('--user')
+    if parse_version(pip.__version__) > parse_version('9.0'):
+        command.append('--format=json')
+        output = check_output(" ".join(command)).decode('utf-8')
+        packages = json.loads(output)
+        return packages
+    else:
+        output = check_output(" ".join(command)).decode('utf-8').strip()
+        packages = parse_legacy(output)
+        return packages
 
 def main():
     args = parse_args()

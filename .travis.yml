@@ -9,7 +9,6 @@ branches:
   except:
     - piptools-ignore-patch
 install:
-  - "python -m pip install pip --upgrade"
   - "pip install cram"
   - "pip install ."
 script:

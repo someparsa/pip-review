@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 from __future__ import absolute_import
 import os
 import re
@@ -8,6 +7,7 @@ import logging
 import sys
 import json
 import pip
+import subprocess
 try:
     import urllib2 as urllib_request  # Python2
 except ImportError:
@@ -40,11 +40,32 @@ except (ImportError, AttributeError):
 
 from packaging import version as packaging_version
 
+SELFUPDATE_NOTICE = '''
+For selfupdate, run python -m pip_review (for Python 2.6, use
+pip_review.__main__).
+'''
+
+DEPRECATED_NOTICE = '''
+Support for Python 2.6 and Python 3.2 has been deprecated. From
+version 1.0 onwards, pip-review will only support Python==2.7 and
+Python>=3.3.
+'''
+
+
+def version_epilog():
+    """Version-specific information to be add to the help page."""
+    if sys.version_info < (2, 7) or (3, 0) <= sys.version_info < (3, 3):
+        return DEPRECATED_NOTICE
+    else:
+        return ''
+
 
 def parse_args():
+    description = 'Keeps your Python packages fresh.'
     parser = argparse.ArgumentParser(
-        description='Keeps your Python package dependencies pinned, '
-                    'but fresh.')
+        description=description,
+        epilog=SELFUPDATE_NOTICE+version_epilog(),
+    )
     parser.add_argument(
         '--verbose', '-v', action='store_true', default=False,
         help='Show more output')
@@ -68,6 +89,13 @@ def parse_args():
         '--pre', '-p', action='store_true', default=False,
         help='Include pre-release and development versions')
     return parser.parse_args()
+
+
+def pip_cmd():
+    if sys.version_info[0] > 2 or sys.version_info[1] > 6:
+        return [sys.executable, '-m', 'pip']
+    else:
+        return ['pip']
 
 
 def load_pkg_info(pkg_name):
@@ -154,7 +182,7 @@ def get_latest_versions(pkg_names, prerelease=False):
 
 def get_installed_pkgs(local=False):
     logger = logging.getLogger(u'pip-review')
-    command = 'pip freeze'
+    command = ' '.join(pip_cmd()) + ' freeze'
     if packaging_version.parse(pip.__version__) >= packaging_version.parse('8.0.3'):
         command += ' --all'
     if local:
@@ -230,10 +258,8 @@ ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
 def update_pkg(pkg, version):
-    command = 'pip install {0}=={1}'.format(pkg, version)
-    if pkg=='pip':
-        command = 'python -m ' + command
-    os.system(command)
+    command = pip_cmd() + ['install', '{0}=={1}'.format(pkg, version)]
+    subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
 
 
 def confirm(question):

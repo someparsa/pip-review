@@ -87,13 +87,10 @@ def parse_args():
         help='Automatically install every update found')
 
 
-    parsed, unknown = parser.parse_known_args() #this is an 'internal' method
-    # which returns 'parsed', the same as what parse_args() would return
-    # and 'unknown', the remainder of that
-    # the difference to parse_args() is that it does not exit when it finds redundant arguments
-    unknown = [arg for arg in unknown if arg.startswith(("-", "--"))]
+    known, remaining = parser.parse_known_args()
+    remaining = [arg for arg in remaining if arg.startswith(("-", "--"))]
     
-    return parsed, unknown
+    return known, remaining
 
 
 def pip_cmd():
@@ -187,8 +184,8 @@ def parse_legacy(pip_output):
     return packages
 
 
-def get_outdated_packages(unknown):
-    command = pip_cmd() + ['list', '--outdated'] + unknown
+def get_outdated_packages(forwarded):
+    command = pip_cmd() + ['list', '--outdated'] + forwarded
     pip_version = parse_version(pip.__version__)
     if pip_version >= parse_version('6.0'):
         command.append('--disable-pip-version-check')
@@ -204,7 +201,7 @@ def get_outdated_packages(unknown):
 
 
 def main():
-    args, unknown = parse_args()
+    args, forwarded = parse_args()
     logger = setup_logging(args.verbose)
 
     if args.raw and args.interactive:
@@ -212,7 +209,7 @@ def main():
 
     packages = []
     all_ok = True
-    for pkg in get_outdated_packages(unknown):
+    for pkg in get_outdated_packages(forwarded):
         if args.raw:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
         else:

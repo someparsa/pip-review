@@ -85,12 +85,7 @@ def parse_args():
     parser.add_argument(
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
-
-
-    known, remaining = parser.parse_known_args()
-    remaining = [arg for arg in remaining if arg.startswith(("-", "--"))]
-    
-    return known, remaining
+    return parser.parse_known_args()
 
 
 def pip_cmd():

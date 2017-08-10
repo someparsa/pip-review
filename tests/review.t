@@ -56,7 +56,7 @@ Next, let's test for regressions with older versions of pip:
   > else
   >   echo Skipped
   > fi
-  (Everything up-to-date|Skipped) (re)
+  (pip==\S+ is available \(you have 1.5.6\)|Skipped) (re)
 
 Cleanup our playground:
 

@@ -188,7 +188,7 @@ def parse_legacy(pip_output):
 
 
 def get_outdated_packages(unknown):
-    command = ['pip', 'list', '--outdated'] + unknown
+    command = pip_cmd() + ['list', '--outdated'] + unknown
     pip_version = parse_version(pip.__version__)
     if pip_version >= parse_version('6.0'):
         command.append('--disable-pip-version-check')

@@ -195,12 +195,6 @@ def main():
     if args.raw and args.interactive:
         raise SystemExit('--raw and --interactive cannot be used together')
 
-    if args.auto and args.editables:
-        if not confirm('WARNING: Using --auto and --editables at the same '
-                       'time might lead to unintended upgrades.\n'
-                       'Are you sure? [y/n] '):
-            raise SystemExit('Quitting')
-
     packages = []
     all_ok = True
     for pkg in get_outdated_packages(unknown):

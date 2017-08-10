@@ -38,7 +38,14 @@ try:
 except (ImportError, AttributeError):
     pass
 
-from packaging import version as packaging_version
+from packaging import version
+
+VERSION_PATTERN = re.compile(
+    version.VERSION_PATTERN,
+    re.VERBOSE | re.IGNORECASE,  # necessary according to the `packaging` docs
+)
+
+NAME_PATTERN = re.compile(r'[a-z0-9_-]+', re.IGNORECASE)
 
 SELFUPDATE_NOTICE = '''
 For selfupdate, run python -m pip_review (for Python 2.6, use
@@ -163,22 +170,29 @@ def confirm(question):
         answer = answer.strip().lower()
     return answer == 'y'
 
+
 def parse_legacy(pip_output):
     packages = []
     for line in pip_output.splitlines():
-        package = {}
-        line = line.split(" - ")
-        package['name'] = re.findall(r'^[a-zA-Z0-9\-]+', line[0])[0]
-        package['version'] = re.findall(r'\(([0-9a-zA-Z\.]+)\)', line[0])[0]
-        package['latest_version'] = re.findall(r'(^[0-9a-zA-Z\.]+)', line[1].split(":")[1].strip())[0]
-        packages.append(package)
+        name_match = NAME_PATTERN.match(line)
+        version_matches = [
+            match.group() for match in VERSION_PATTERN.finditer(line)
+        ]
+        if name_match and len(version_matches) == 2:
+            packages.append({
+                'name': name_match.group(),
+                'version': version_matches[0],
+                'latest_version': version_matches[1],
+            })
     return packages
 
 
 def get_outdated_packages(unknown):
     command = ['pip', 'list', '--outdated'] + unknown
-    if parse_version(pip.__version__) > parse_version('9.0'):
+    pip_version = parse_version(pip.__version__)
+    if pip_version >= parse_version('6.0'):
         command.append('--disable-pip-version-check')
+    if pip_version > parse_version('9.0'):
         command.append('--format=json')
         output = check_output(" ".join(command)).decode('utf-8')
         packages = json.loads(output)
@@ -187,6 +201,7 @@ def get_outdated_packages(unknown):
         output = check_output(" ".join(command)).decode('utf-8').strip()
         packages = parse_legacy(output)
         return packages
+
 
 def main():
     args, unknown = parse_args()

@@ -6,6 +6,8 @@ from functools import partial
 import logging
 import json
 import sys
+import pip
+import subprocess
 try:
     import urllib2 as urllib_request  # Python2
 except ImportError:
@@ -99,103 +101,6 @@ def pip_cmd():
         return ['pip']
 
 
-def load_pkg_info(pkg_name):
-    if pkg_name is None:
-        return
-
-    logger = logging.getLogger(u'pip-review')
-    logger.debug('Checking for updates of {0}'.format(pkg_name))
-
-    req = urllib_request.Request(
-        'https://pypi.python.org/pypi/{0}/json'.format(pkg_name))
-    try:
-        handler = urllib_request.urlopen(req)
-    except urllib_request.HTTPError:
-        return
-
-    if handler.getcode() == 200:
-        content = handler.read()
-        return json.loads(content.decode('utf-8'))
-
-
-def guess_pkg_name(pkg_name):
-    logger = logging.getLogger(u'pip-review')
-    logger.debug('Try to guess package {0} name on PyPI.'.format(pkg_name))
-    req = urllib_request.Request(
-        'https://pypi.python.org/simple/{0}/'.format(pkg_name))
-    try:
-        handler = urllib_request.urlopen(req)
-    except urllib_request.HTTPError:
-        return None
-
-    if handler.getcode() == 200:
-        url_match = re.search(r'/pypi\.python\.org/simple/([^/]+)/',
-                              handler.geturl())
-        if url_match:
-            return url_match.group(1)
-    return None
-
-
-def get_pkg_info(pkg_name, silent=False):
-    info = load_pkg_info(pkg_name)
-    if info is None:
-        guessed_name = guess_pkg_name(pkg_name)
-        if guessed_name is not None:
-            info = load_pkg_info(guessed_name)
-    if info is None and not silent:
-        raise ValueError('Package {0} not found on PyPI.'.format(pkg_name))
-    return info
-
-
-def latest_version(pkg_name, pre_release=False, silent=False):
-    try:
-        info = get_pkg_info(pkg_name, silent=silent)
-    except ValueError:
-        if silent:
-            return None, None
-        else:
-            raise
-    if not info:
-        return None, None
-
-    try:
-        versions = [
-            v for v in sorted(
-                list(info['releases']),
-                key=packaging_version.parse
-            )
-        ]
-        if not pre_release:
-            versions = [v for v in versions
-                        if not packaging_version.parse(v).is_prerelease]
-        version = versions[-1]
-    except IndexError:
-        return None, None
-
-    return parse_version(version), version
-
-
-def get_latest_versions(pkg_names, pre_release=False):
-    get_latest = partial(latest_version, pre_release=pre_release, silent=True)
-    versions = map(get_latest, pkg_names)
-    return zip(pkg_names, versions)
-
-
-def get_installed_pkgs(local=False, user=False):
-    command = ['pip', 'list', '--format=json']
-    if local:
-        command.append('--local')
-    if user:
-        command.append('--user')
-
-    output = check_output(" ".join(command)).decode('utf-8').strip()
-    packages = json.loads(output)
-    for package in packages:
-        name = package["name"]
-        version = package["version"]
-        yield name, parse_version(version), version, False
-
-
 class StdOutFilter(logging.Filter):
     def filter(self, record):
         return record.levelno in [logging.DEBUG, logging.INFO]
@@ -249,8 +154,10 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_pkg(pkg, version):
-    command = pip_cmd() + ['install', '{0}=={1}'.format(pkg, version)]
+def update_packages(packages):
+    command = pip_cmd() + ['install'] + [
+        '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
+   
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
 
 
@@ -274,7 +181,7 @@ def parse_legacy(pip_output):
 
 
 def get_outdated_packages(local=False, pre_release=False, user=False):
-    command = ['pip', 'list', '--outdated', '--disable-pip-version-check']
+    command = ['pip', 'list', '--outdated']
     if local:
         command.append('--local')
     if pre_release:
@@ -282,6 +189,7 @@ def get_outdated_packages(local=False, pre_release=False, user=False):
     if user:
         command.append('--user')
     if parse_version(pip.__version__) > parse_version('9.0'):
+        command.append('--disable-pip-version-check')
         command.append('--format=json')
         output = check_output(" ".join(command)).decode('utf-8')
         packages = json.loads(output)
@@ -304,43 +212,28 @@ def main():
                        'Are you sure? [y/n] '):
             raise SystemExit('Quitting')
 
-    installed = list(get_installed_pkgs(local=args.local,user=args.user))
-    lookup_on_pypi = [name for name, _, _, editable in installed
-                      if not editable or args.editables]
-    latest_versions = dict(get_latest_versions(lookup_on_pypi, args.pre))
-
+    packages = []
     all_ok = True
-    for pkg, installed_raw_version, installed_version, editable in installed:
-        if editable and not args.editables:
-            logger.debug('Skipping -e {0}=={1}'.format(pkg, installed_version))
-            all_ok = False
-            continue
-
-        raw_version, latest_version = latest_versions[pkg]
-        if raw_version is None:
-            logger.warning('No update information found for {0}'.format(pkg))
-            all_ok = False
-        elif parse_version(str(raw_version)) > parse_version(str(installed_raw_version)):
-            if args.raw:
-                logger.info('{0}=={1}'.format(pkg, latest_version))
+    for pkg in get_outdated_packages():
+        if args.raw:
+            logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
+        else:
+            if args.auto:
+                packages.append(pkg)
             else:
-                if args.auto:
-                    update_pkg(pkg, latest_version)
-                else:
-                    logger.info('{0}=={1} is available (you have {2})'.format(
-                        pkg, latest_version, installed_version
-                    ))
-                    if args.interactive:
-                        answer = ask_to_install()
-                        if answer in ['y', 'a']:
-                            update_pkg(pkg, latest_version)
+                logger.info('{0}=={1} is available (you have {2})'.format(
+                    pkg['name'], pkg['latest_version'], pkg['version']
+                ))
+                if args.interactive:
+                    answer = ask_to_install()
+                    if answer in ['y', 'a']:
+                        packages.append(pkg)
             all_ok = False
-        elif not args.raw:
-            logger.debug(
-                '{0}=={1} is up-to-date'.format(pkg, installed_version))
 
     if all_ok and not args.raw:
         logger.info('Everything up-to-date')
+    elif packages:
+        update_packages(packages)
 
 
 if __name__ == '__main__':

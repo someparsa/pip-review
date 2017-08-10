@@ -207,28 +207,26 @@ def main():
     if args.raw and args.interactive:
         raise SystemExit('--raw and --interactive cannot be used together')
 
-    packages = []
-    all_ok = True
-    for pkg in get_outdated_packages(forwarded):
-        if args.raw:
-            logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
-        else:
-            if args.auto:
-                packages.append(pkg)
-            else:
-                logger.info('{0}=={1} is available (you have {2})'.format(
-                    pkg['name'], pkg['latest_version'], pkg['version']
-                ))
-                if args.interactive:
-                    answer = ask_to_install()
-                    if answer in ['y', 'a']:
-                        packages.append(pkg)
-            all_ok = False
-
-    if all_ok and not args.raw:
+    outdated = get_outdated_packages(forwarded)
+    if not outdated and not args.raw:
         logger.info('Everything up-to-date')
-    elif packages:
-        update_packages(packages)
+    elif args.auto:
+        update_packages(outdated)
+    elif args.raw:
+        for pkg in outdated:
+            logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
+    else:
+        selected = []
+        for pkg in outdated:
+            logger.info('{0}=={1} is available (you have {2})'.format(
+                pkg['name'], pkg['latest_version'], pkg['version']
+            ))
+            if args.interactive:
+                answer = ask_to_install()
+                if answer in ['y', 'a']:
+                    selected.append(pkg)
+        if selected:
+            update_packages(selected)
 
 
 if __name__ == '__main__':

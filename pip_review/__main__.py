@@ -149,8 +149,8 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_packages(packages, unknown):
-    command = pip_cmd() + ['install'] + unknown + [
+def update_packages(packages):
+    command = pip_cmd() + ['install'] + [
         '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
    
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
@@ -175,14 +175,8 @@ def parse_legacy(pip_output):
     return packages
 
 
-def get_outdated_packages(local=False, pre_release=False, user=False):
-    command = ['pip', 'list', '--outdated']
-    if local:
-        command.append('--local')
-    if pre_release:
-        command.append('--pre')
-    if user:
-        command.append('--user')
+def get_outdated_packages(unknown):
+    command = ['pip', 'list', '--outdated'] + unknown
     if parse_version(pip.__version__) > parse_version('9.0'):
         command.append('--disable-pip-version-check')
         command.append('--format=json')
@@ -209,7 +203,7 @@ def main():
 
     packages = []
     all_ok = True
-    for pkg in get_outdated_packages():
+    for pkg in get_outdated_packages(unknown):
         if args.raw:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
         else:
@@ -228,7 +222,7 @@ def main():
     if all_ok and not args.raw:
         logger.info('Everything up-to-date')
     elif packages:
-        update_packages(packages, unknown)
+        update_packages(packages)
 
 
 if __name__ == '__main__':

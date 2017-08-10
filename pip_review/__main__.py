@@ -78,20 +78,15 @@ def parse_args():
     parser.add_argument(
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
-    parser.add_argument(
-        '--editables', '-e', action='store_true', default=False,
-        help='Also include editable packages in PyPI lookup')
-    parser.add_argument(
-        '--user', '-u', action='store_true', default=False,
-        help='Only output packages installed in user-site.')
-    parser.add_argument(
-        '--local', '-l', action='store_true', default=False,
-        help='If in a virtualenv that has global access, do not output '
-             'globally-installed packages')
-    parser.add_argument(
-        '--pre', '-p', action='store_true', default=False,
-        help='Include pre-release and development versions')
-    return parser.parse_args()
+
+
+    parsed, unknown = parser.parse_known_args() #this is an 'internal' method
+    # which returns 'parsed', the same as what parse_args() would return
+    # and 'unknown', the remainder of that
+    # the difference to parse_args() is that it does not exit when it finds redundant arguments
+    unknown = [arg for arg in unknown if arg.startswith(("-", "--"))]
+    
+    return parsed, unknown
 
 
 def pip_cmd():
@@ -154,8 +149,8 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_packages(packages):
-    command = pip_cmd() + ['install'] + [
+def update_packages(packages, unknown):
+    command = pip_cmd() + ['install'] + unknown + [
         '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
    
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
@@ -200,7 +195,7 @@ def get_outdated_packages(local=False, pre_release=False, user=False):
         return packages
 
 def main():
-    args = parse_args()
+    args, unknown = parse_args()
     logger = setup_logging(args.verbose)
 
     if args.raw and args.interactive:
@@ -233,7 +228,7 @@ def main():
     if all_ok and not args.raw:
         logger.info('Everything up-to-date')
     elif packages:
-        update_packages(packages)
+        update_packages(packages, unknown)
 
 
 if __name__ == '__main__':

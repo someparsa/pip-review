@@ -10,7 +10,7 @@ setup(
     version='1.0',
     url='https://github.com/jgonggrijp/pip-review',
     license='BSD',
-    author='Vincent Driessen, Julian Gonggrijp',
+    author='Julian Gonggrijp, Vincent Driessen',
     author_email='j.gonggrijp@gmail.com',
     description=__doc__.strip('\n'),
     packages=[

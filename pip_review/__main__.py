@@ -19,7 +19,7 @@ try:
 except ImportError:
     import subprocess
 
-    def _check_output(*args, **kwargs):
+    def check_output(*args, **kwargs):
         process = subprocess.Popen(stdout=subprocess.PIPE, *args, **kwargs)
         output, _ = process.communicate()
         retcode = process.poll()
@@ -28,9 +28,6 @@ except ImportError:
             error.output = output
             raise error
         return output
-
-
-check_output = partial(_check_output, shell=True)
 
 try:
     import __builtin__

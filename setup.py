@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='pip-review',
-    version='0.5.3',
+    version='1.0',
     url='https://github.com/jgonggrijp/pip-review',
     license='BSD',
     author='Vincent Driessen, Julian Gonggrijp',

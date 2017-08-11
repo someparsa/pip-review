@@ -27,9 +27,8 @@ setup(
     install_requires=[
         'packaging',
         'pip',
-        'argparse;python_version<"2.7"',
     ],
-    python_requires='>=2.6, !=3.0, !=3.1',
+    python_requires='>=2.7, !=3.0, !=3.1, !=3.2',
     classifiers=[
         # As from https://pypi.python.org/pypi?%3Aaction=list_classifiers
         #'Development Status :: 1 - Planning',

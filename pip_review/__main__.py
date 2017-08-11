@@ -15,7 +15,7 @@ except ImportError:
 from pkg_resources import parse_version
 
 try:
-    from subprocess import check_output as _check_output
+    from subprocess import check_output
 except ImportError:
     import subprocess
 

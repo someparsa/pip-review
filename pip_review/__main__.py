@@ -44,14 +44,16 @@ VERSION_PATTERN = re.compile(
 
 NAME_PATTERN = re.compile(r'[a-z0-9_-]+', re.IGNORECASE)
 
-SELFUPDATE_NOTICE = '''
-For selfupdate, run python -m pip_review (for Python 2.6, use
-pip_review.__main__).
+EPILOG = '''
+Unrecognised arguments will be forwarded to pip list --outdated,
+so you can pass things such as --user, --pre and --timeout and
+they will do exactly what you expect. See pip list -h for a full
+overview of the options.
 '''
 
 DEPRECATED_NOTICE = '''
-Support for Python 2.6 and Python 3.2 has been deprecated. From
-version 1.0 onwards, pip-review will only support Python==2.7 and
+Support for Python 2.6 and Python 3.2 has been stopped. From
+version 1.0 onwards, pip-review only supports Python==2.7 and
 Python>=3.3.
 '''
 
@@ -68,7 +70,7 @@ def parse_args():
     description = 'Keeps your Python packages fresh.'
     parser = argparse.ArgumentParser(
         description=description,
-        epilog=SELFUPDATE_NOTICE+version_epilog(),
+        epilog=EPILOG+version_epilog(),
     )
     parser.add_argument(
         '--verbose', '-v', action='store_true', default=False,
@@ -86,10 +88,7 @@ def parse_args():
 
 
 def pip_cmd():
-    if sys.version_info[0] > 2 or sys.version_info[1] > 6:
-        return [sys.executable, '-m', 'pip']
-    else:
-        return ['pip']
+    return [sys.executable, '-m', 'pip']
 
 
 class StdOutFilter(logging.Filter):

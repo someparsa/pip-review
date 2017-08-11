@@ -37,12 +37,11 @@ Example, run interactively, ask to upgrade for each package:
     Upgrade now? [Y]es, [N]o, [A]ll, [Q]uit y
     ...
 
-Up until version 0.3.7, ``pip-review`` would show and install any available
-update including pre-release versions. As of version 0.4, it will only show and
-install release versions by default. To restore the original behaviour, use the
-``--pre`` flag.
+Run ``pip-review -h`` for a complete overview of the options.
 
-Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. **This is the only way to invoke pip-review that enables it to update itself.**
+Since version 0.5, you can also invoke pip-review as ``python -m pip_review``.
+
+Before version 1.0, ``pip-review`` had its own logic for finding package updates instead of relying on ``pip list --outdated``.
 
 
 Installation

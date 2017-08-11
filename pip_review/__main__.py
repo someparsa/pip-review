@@ -47,9 +47,11 @@ VERSION_PATTERN = re.compile(
 
 NAME_PATTERN = re.compile(r'[a-z0-9_-]+', re.IGNORECASE)
 
-SELFUPDATE_NOTICE = '''
-For selfupdate, run python -m pip_review (for Python 2.6, use
-pip_review.__main__).
+EPILOG = '''
+Unrecognised arguments will be forwarded to pip list --outdated,
+so you can pass things such as --user, --pre and --timeout and
+they will do exactly what you expect. See pip list -h for a full
+overview of the options.
 '''
 
 DEPRECATED_NOTICE = '''
@@ -71,7 +73,7 @@ def parse_args():
     description = 'Keeps your Python packages fresh.'
     parser = argparse.ArgumentParser(
         description=description,
-        epilog=SELFUPDATE_NOTICE+version_epilog(),
+        epilog=EPILOG+version_epilog(),
     )
     parser.add_argument(
         '--verbose', '-v', action='store_true', default=False,

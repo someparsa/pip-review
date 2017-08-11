@@ -186,11 +186,11 @@ def get_outdated_packages(forwarded):
         command.append('--disable-pip-version-check')
     if pip_version > parse_version('9.0'):
         command.append('--format=json')
-        output = check_output(" ".join(command)).decode('utf-8')
+        output = check_output(command).decode('utf-8')
         packages = json.loads(output)
         return packages
     else:
-        output = check_output(" ".join(command)).decode('utf-8').strip()
+        output = check_output(command).decode('utf-8').strip()
         packages = parse_legacy(output)
         return packages
 

@@ -15,11 +15,11 @@ except ImportError:
 from pkg_resources import parse_version
 
 try:
-    from subprocess import check_output as _check_output
+    from subprocess import check_output
 except ImportError:
     import subprocess
 
-    def _check_output(*args, **kwargs):
+    def check_output(*args, **kwargs):
         process = subprocess.Popen(stdout=subprocess.PIPE, *args, **kwargs)
         output, _ = process.communicate()
         retcode = process.poll()
@@ -28,9 +28,6 @@ except ImportError:
             error.output = output
             raise error
         return output
-
-
-check_output = partial(_check_output, shell=True)
 
 try:
     import __builtin__
@@ -186,11 +183,11 @@ def get_outdated_packages(forwarded):
         command.append('--disable-pip-version-check')
     if pip_version > parse_version('9.0'):
         command.append('--format=json')
-        output = check_output(" ".join(command)).decode('utf-8')
+        output = check_output(command).decode('utf-8')
         packages = json.loads(output)
         return packages
     else:
-        output = check_output(" ".join(command)).decode('utf-8').strip()
+        output = check_output(command).decode('utf-8').strip()
         packages = parse_legacy(output)
         return packages
 

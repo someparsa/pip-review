@@ -5,18 +5,16 @@
 pip-review
 ==========
 
-``pip-review`` checks PyPI and reports available updates.  It uses the list of
-currently installed packages to check for updates, it does not use any
-``requirements.txt``.
+``pip-review`` is a convenience wrapper around ``pip``. It can list available updates by deferring to ``pip list --outdated``. It can also automatically or interactively install available updates for you by deferring to ``pip install``. 
 
 Example, report-only:
 
 .. code:: console
 
     $ pip-review
-    requests==0.13.4 available (you have 0.13.2)
-    redis==2.4.13 available (you have 2.4.9)
-    rq==0.3.2 available (you have 0.3.0)
+    requests==0.13.4 is available (you have 0.13.2)
+    redis==2.4.13 is available (you have 2.4.9)
+    rq==0.3.2 is available (you have 0.3.0)
 
 Example, actually install everything:
 
@@ -30,12 +28,12 @@ Example, run interactively, ask to upgrade for each package:
 .. code:: console
 
     $ pip-review --interactive
-    requests==0.14.0 available (you have 0.13.2)
+    requests==0.14.0 is available (you have 0.13.2)
     Upgrade now? [Y]es, [N]o, [A]ll, [Q]uit y
     ...
-    redis==2.6.2 available (you have 2.4.9)
+    redis==2.6.2 is available (you have 2.4.9)
     Upgrade now? [Y]es, [N]o, [A]ll, [Q]uit n
-    rq==0.3.2 available (you have 0.3.0)
+    rq==0.3.2 is available (you have 0.3.0)
     Upgrade now? [Y]es, [N]o, [A]ll, [Q]uit y
     ...
 

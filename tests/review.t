@@ -41,6 +41,16 @@ Or in raw mode:
   $ pip-review --raw 2>&1 | strip_deprecation_notice
   python-dateutil==* (glob)
 
+pip-review forwards arguments it doesn't recognize to pip:
+
+  $ pip-review --timeout 30 2>&1 | strip_deprecation_notice
+  python-dateutil==* is available (you have 1.5) (glob)
+
+It only fails if pip doesn't recognize it either:
+
+  $ pip-review --bananas >/dev/null 2>&1 | strip_deprecation_notice
+  [1]
+
 We can also install these updates automatically:
 
   $ pip-review --auto >/dev/null 2>&1
@@ -56,7 +66,7 @@ Next, let's test for regressions with older versions of pip:
   > else
   >   echo Skipped
   > fi
-  (Everything up-to-date|Skipped) (re)
+  (pip==\S+ is available \(you have 1.5.6\)|Skipped) (re)
 
 Cleanup our playground:
 

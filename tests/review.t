@@ -15,36 +15,30 @@ Setup. Let's pretend we have some outdated package versions installed:
 
   $ pip install python-dateutil==1.5 >/dev/null 2>&1
 
-Also install library, which caused warning message:
-
-  $ pip install http://www.effbot.org/media/downloads/cElementTree-1.0.5-20051216.tar.gz >/dev/null 2>&1
-
-Define a filter to strip the deprecation notice for Python 2.6:
-
-  $ function strip_deprecation_notice {
-  >     grep -v 'DEPRECATION: Python 2.6 is no longer supported' || true
-  > }
-
-Before our next test, let's just check that the Bash option pipefail works:
-
-  $ set -o pipefail
-  $ false | true
-  [1]
-
 Next, let's see what pip-review does:
 
-  $ pip-review 2>&1 | strip_deprecation_notice
+  $ pip-review 2>&1
   python-dateutil==* is available (you have 1.5) (glob)
 
 Or in raw mode:
 
-  $ pip-review --raw 2>&1 | strip_deprecation_notice
+  $ pip-review --raw 2>&1
   python-dateutil==* (glob)
+
+pip-review forwards arguments it doesn't recognize to pip:
+
+  $ pip-review --timeout 30 2>&1
+  python-dateutil==* is available (you have 1.5) (glob)
+
+It only fails if pip doesn't recognize it either:
+
+  $ pip-review --bananas >/dev/null 2>&1
+  [1]
 
 We can also install these updates automatically:
 
   $ pip-review --auto >/dev/null 2>&1
-  $ pip-review 2>&1 | strip_deprecation_notice
+  $ pip-review 2>&1
   Everything up-to-date
 
 Next, let's test for regressions with older versions of pip:
@@ -56,7 +50,7 @@ Next, let's test for regressions with older versions of pip:
   > else
   >   echo Skipped
   > fi
-  (Everything up-to-date|Skipped) (re)
+  (pip==\S+ is available \(you have 1.5.6\)|Skipped) (re)
 
 Cleanup our playground:
 

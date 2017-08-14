@@ -8,15 +8,12 @@ import json
 import sys
 import pip
 import subprocess
-try:
-    import urllib2 as urllib_request  # Python2
-except ImportError:
-    import urllib.request as urllib_request
 from pkg_resources import parse_version
+from packaging import version
 
-try:
-    from subprocess import check_output
-except ImportError:
+PY3 = sys.version_info.major == 3
+if PY3:  # Python3 Imports
+    import urllib.request as urllib_request
     import subprocess
 
     def check_output(*args, **kwargs):
@@ -29,13 +26,12 @@ except ImportError:
             raise error
         return output
 
-try:
+else:  # Python2 Imports
+    import urllib2 as urllib_request
+    from subprocess import check_output
     import __builtin__
-    input = getattr(__builtin__, 'raw_input')  # Python2
-except (ImportError, AttributeError):
-    pass
+    input = getattr(__builtin__, 'raw_input')
 
-from packaging import version
 
 VERSION_PATTERN = re.compile(
     version.VERSION_PATTERN,
@@ -147,13 +143,13 @@ ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 def update_packages(packages):
     command = pip_cmd() + ['install'] + [
         '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
-   
+
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
 
 
 def confirm(question):
     answer = ''
-    while not answer in ['y', 'n']:
+    while answer not in ['y', 'n']:
         answer = input(question)
         answer = answer.strip().lower()
     return answer == 'y'

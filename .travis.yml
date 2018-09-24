@@ -7,7 +7,8 @@ branches:
   except:
     - piptools-ignore-patch
 install:
-  - "pip install -U pip setuptools wheel"
+  - "pip install -U pip wheel"
+  - "python -c 'import sys; sys.exit(0 if (3, 3) <= sys.version_info < (3, 4) else 1)' && pip install setuptools==39.2 || pip install -U setuptools"
   - "pip install cram"
   - "pip install ."
 script:

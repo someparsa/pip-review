@@ -13,7 +13,7 @@ setup(
     author='Julian Gonggrijp, Vincent Driessen',
     author_email='j.gonggrijp@gmail.com',
     description=__doc__.strip('\n'),
-    long_description=open('README.rst', encoding='utf-8').read(),
+    long_description=open('README.rst').read(),
     long_description_content_type='text/x-rst',
     packages=[
         'pip_review',

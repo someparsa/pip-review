@@ -8,7 +8,6 @@ import json
 import sys
 import pip
 import subprocess
-from pkg_resources import parse_version
 from packaging import version
 
 PY3 = sys.version_info.major == 3
@@ -173,10 +172,10 @@ def parse_legacy(pip_output):
 
 def get_outdated_packages(forwarded):
     command = pip_cmd() + ['list', '--outdated'] + forwarded
-    pip_version = parse_version(pip.__version__)
-    if pip_version >= parse_version('6.0'):
+    pip_version = version.parse(pip.__version__)
+    if pip_version >= version.parse('6.0'):
         command.append('--disable-pip-version-check')
-    if pip_version > parse_version('9.0'):
+    if pip_version > version.parse('9.0'):
         command.append('--format=json')
         output = check_output(command).decode('utf-8')
         packages = json.loads(output)

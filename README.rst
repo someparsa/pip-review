@@ -5,7 +5,7 @@
 pip-review
 ==========
 
-``pip-review`` is a convenience wrapper around ``pip``. It can list available updates by deferring to ``pip list --outdated``. It can also automatically or interactively install available updates for you by deferring to ``pip install``. 
+``pip-review`` is a convenience wrapper around ``pip``. It can list available updates by deferring to ``pip list --outdated``. It can also automatically or interactively install available updates for you by deferring to ``pip install``.
 
 Example, report-only:
 
@@ -39,7 +39,7 @@ Example, run interactively, ask to upgrade for each package:
 
 Run ``pip-review -h`` for a complete overview of the options.
 
-Since version 0.5, you can also invoke pip-review as ``python -m pip_review``.
+Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. This can be useful if you are using multiple versions of Python next to each other.
 
 Before version 1.0, ``pip-review`` had its own logic for finding package updates instead of relying on ``pip list --outdated``.
 
@@ -79,7 +79,7 @@ involves downloading packages, etc.  So please be patient.
 Origins
 =======
 
-``pip-review`` was originally part of pip-tools_ but 
+``pip-review`` was originally part of pip-tools_ but
 has been discontinued_ as such. See `Pin Your Packages`_ by Vincent
 Driessen for the original introduction. Since there are still use cases, the
 tool now lives on as a separate package.

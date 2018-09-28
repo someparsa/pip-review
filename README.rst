@@ -43,6 +43,8 @@ Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. T
 
 Before version 1.0, ``pip-review`` had its own logic for finding package updates instead of relying on ``pip list --outdated``.
 
+Like ``pip``, ``pip-review`` updates **all** packages, including ``pip`` and ``pip-review``.
+
 
 Installation
 ============

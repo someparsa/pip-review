@@ -119,6 +119,7 @@ def setup_logging(verbose):
 class InteractiveAsker(object):
     def __init__(self):
         self.cached_answer = None
+        self.last_answer= None
 
     def ask(self, prompt):
         if self.cached_answer is not None:
@@ -129,9 +130,11 @@ class InteractiveAsker(object):
             answer = input(
                 '{0} [Y]es, [N]o, [A]ll, [Q]uit '.format(prompt))
             answer = answer.strip().lower()
+            answer = self.last_answer if answer == '' else answer
 
         if answer in ['q', 'a']:
             self.cached_answer = answer
+        self.last_answer = answer
 
         return answer
 

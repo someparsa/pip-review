@@ -127,8 +127,9 @@ class InteractiveAsker(object):
 
         answer = ''
         while answer not in ['y', 'n', 'a', 'q']:
-            answer = input(
-                '{0} [Y]es, [N]o, [A]ll, [Q]uit '.format(prompt))
+            question_last='{0} [Y]es, [N]o, [A]ll, [Q]uit, [{1}]'.format(prompt,self.last_answer)
+            question_default='{0} [Y]es, [N]o, [A]ll, [Q]uit '.format(prompt)
+            answer = input(question_last if self.last_answer else question_default)
             answer = answer.strip().lower()
             answer = self.last_answer if answer == '' else answer
 

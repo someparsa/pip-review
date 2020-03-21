@@ -68,7 +68,7 @@ def version_epilog():
 
 
 def parse_args():
-    description = 'Keeps your Python packages fresh.'
+    description = 'Keeps your Python packages fresh. Looking for a new maintainer! See https://github.com/jgonggrijp/pip-review/issues/76'
     parser = argparse.ArgumentParser(
         description=description,
         epilog=EPILOG+version_epilog(),

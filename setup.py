@@ -7,7 +7,7 @@ from setuptools import setup
 
 setup(
     name='pip-review',
-    version='1.0',
+    version='1.1.0',
     url='https://github.com/jgonggrijp/pip-review',
     license='BSD',
     author='Julian Gonggrijp, Vincent Driessen',
@@ -55,6 +55,8 @@ setup(
         'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
         'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7',
+        'Programming Language :: Python :: 3.8',
         'Intended Audience :: Developers',
         'Intended Audience :: System Administrators',
         'License :: OSI Approved :: BSD License',

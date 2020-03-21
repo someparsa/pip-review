@@ -40,10 +40,10 @@ VERSION_PATTERN = re.compile(
 NAME_PATTERN = re.compile(r'[a-z0-9_-]+', re.IGNORECASE)
 
 EPILOG = '''
-Unrecognised arguments will be forwarded to pip list --outdated,
-so you can pass things such as --user, --pre and --timeout and
-they will do exactly what you expect. See pip list -h for a full
-overview of the options.
+Unrecognised arguments will be forwarded to pip list --outdated and
+pip install, so you can pass things such as --user, --pre and --timeout
+and they will do what you expect. See pip list -h and pip install -h
+for a full overview of the options.
 '''
 
 DEPRECATED_NOTICE = '''
@@ -68,7 +68,7 @@ def version_epilog():
 
 
 def parse_args():
-    description = 'Keeps your Python packages fresh.'
+    description = 'Keeps your Python packages fresh. Looking for a new maintainer! See https://github.com/jgonggrijp/pip-review/issues/76'
     parser = argparse.ArgumentParser(
         description=description,
         epilog=EPILOG+version_epilog(),

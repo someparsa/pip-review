@@ -88,6 +88,25 @@ def parse_args():
     return parser.parse_known_args()
 
 
+def filter_forwards(args, exclude):
+    """ Return only the parts of `args` that do not appear in `exclude`. """
+    result = []
+    # Start with false, because an unknown argument not starting with a dash
+    # probably would just trip pip.
+    admitted = False
+    for arg in args:
+        if not arg.startswith('-'):
+            # assume this belongs with the previous argument.
+            if admitted:
+                result.append(arg)
+        elif arg.lstrip('-') in exclude:
+            admitted = False
+        else:
+            result.append(arg)
+            admitted = True
+    return result
+
+
 def pip_cmd():
     return [sys.executable, '-m', 'pip']
 

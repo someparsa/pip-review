@@ -168,9 +168,10 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_packages(packages):
-    command = pip_cmd() + ['install'] + [
-        '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
+def update_packages(packages, forwarded):
+    command = pip_cmd() + ['install'] + forwarded + [
+        '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages
+    ]
 
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
 
@@ -217,16 +218,18 @@ def get_outdated_packages(forwarded):
 
 def main():
     args, forwarded = parse_args()
+    list_args = filter_forwards(forwarded, INSTALL_ONLY)
+    install_args = filter_forwards(forwarded, LIST_ONLY)
     logger = setup_logging(args.verbose)
 
     if args.raw and args.interactive:
         raise SystemExit('--raw and --interactive cannot be used together')
 
-    outdated = get_outdated_packages(forwarded)
+    outdated = get_outdated_packages(list_args)
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
     elif args.auto:
-        update_packages(outdated)
+        update_packages(outdated, install_args)
     elif args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
@@ -241,7 +244,7 @@ def main():
                 if answer in ['y', 'a']:
                     selected.append(pkg)
         if selected:
-            update_packages(selected)
+            update_packages(selected, install_args)
 
 
 if __name__ == '__main__':

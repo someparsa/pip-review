@@ -5,7 +5,9 @@
 pip-review
 ==========
 
-``pip-review`` is a convenience wrapper around ``pip``. It can list available updates by deferring to ``pip list --outdated``. It can also automatically or interactively install available updates for you by deferring to ``pip install``. 
+*Looking for a new maintainer! See https://github.com/jgonggrijp/pip-review/issues/76.*
+
+``pip-review`` is a convenience wrapper around ``pip``. It can list available updates by deferring to ``pip list --outdated``. It can also automatically or interactively install available updates for you by deferring to ``pip install``.
 
 Example, report-only:
 
@@ -39,9 +41,33 @@ Example, run interactively, ask to upgrade for each package:
 
 Run ``pip-review -h`` for a complete overview of the options.
 
-Since version 0.5, you can also invoke pip-review as ``python -m pip_review``.
+Note: If you want to pin specific packages to prevent them from automatically
+being upgraded, you can use a constraint file (similar to ``requirements.txt``):
+
+.. code:: console
+
+    $ export PIP_CONSTRAINT="${HOME}/constraints.txt
+    $ cat $PIP_CONSTRAINT
+    pyarrow==0.14.1
+    pandas<0.24.0
+
+    $ pip-review --auto
+    ...
+
+Set this variable in ``.bashrc`` or ``.zshenv`` to make it persistent.
+Alternatively, this option can be specified in ``pip.conf``, e.g.:
+
+.. code:: console
+
+    $ cat ~/.config/pip.conf
+    [global]
+    constraint = /home/username/constraints.txt
+
+Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. This can be useful if you are using multiple versions of Python next to each other.
 
 Before version 1.0, ``pip-review`` had its own logic for finding package updates instead of relying on ``pip list --outdated``.
+
+Like ``pip``, ``pip-review`` updates **all** packages, including ``pip`` and ``pip-review``.
 
 
 Installation
@@ -79,7 +105,7 @@ involves downloading packages, etc.  So please be patient.
 Origins
 =======
 
-``pip-review`` was originally part of pip-tools_ but 
+``pip-review`` was originally part of pip-tools_ but
 has been discontinued_ as such. See `Pin Your Packages`_ by Vincent
 Driessen for the original introduction. Since there are still use cases, the
 tool now lives on as a separate package.

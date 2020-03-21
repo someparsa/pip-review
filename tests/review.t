@@ -9,6 +9,7 @@ Create a new playground first:
   $ pip install packaging >/dev/null 2>&1
   $ pip install -U --force-reinstall argparse >/dev/null 2>&1
   $ pip install -U --force-reinstall wheel >/dev/null 2>&1
+  $ pip install -U --force-reinstall setuptools >/dev/null 2>&1
   $ function pip-review { python -m pip_review.__main__ $* ; }
 
 Setup. Let's pretend we have some outdated package versions installed:
@@ -40,6 +41,16 @@ We can also install these updates automatically:
   $ pip-review --auto >/dev/null 2>&1
   $ pip-review 2>&1 | egrep -v '^DEPRECATION:'
   Everything up-to-date
+
+It knows which arguments not to forward to pip list:
+
+  $ pip install python-dateutil==1.5 >/dev/null 2>&1
+  $ pip-review --auto --force-reinstall >/dev/null 2>&1
+
+It knows which arguments not to forward to pip install:
+
+  $ pip install python-dateutil==1.5 >/dev/null 2>&1
+  $ pip-review --auto --not-required >/dev/null 2>&1
 
 Next, let's test for regressions with older versions of pip:
 

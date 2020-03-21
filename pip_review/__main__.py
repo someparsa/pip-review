@@ -52,6 +52,12 @@ version 1.0 onwards, pip-review only supports Python==2.7 and
 Python>=3.3.
 '''
 
+# parameters that pip list supports but not pip install
+LIST_ONLY = set('l local path format not-required exclude-editable include-editable'.split())
+
+# parameters that pip install supports but not pip list
+INSTALL_ONLY = set('c constraint no-deps t target platform python-version implementation abi root prefix b build src U upgrade upgrade-strategy force-reinstall I ignore-installed ignore-requires-python no-build-isolation use-pep517 install-option global-option compile no-compile no-warn-script-location no-warn-conflicts no-binary only-binary prefer-binary no-clean require-hashes progress-bar'.split())
+
 
 def version_epilog():
     """Version-specific information to be add to the help page."""
@@ -80,6 +86,25 @@ def parse_args():
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
     return parser.parse_known_args()
+
+
+def filter_forwards(args, exclude):
+    """ Return only the parts of `args` that do not appear in `exclude`. """
+    result = []
+    # Start with false, because an unknown argument not starting with a dash
+    # probably would just trip pip.
+    admitted = False
+    for arg in args:
+        if not arg.startswith('-'):
+            # assume this belongs with the previous argument.
+            if admitted:
+                result.append(arg)
+        elif arg.lstrip('-') in exclude:
+            admitted = False
+        else:
+            result.append(arg)
+            admitted = True
+    return result
 
 
 def pip_cmd():
@@ -143,9 +168,10 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_packages(packages):
-    command = pip_cmd() + ['install'] + [
-        '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages]
+def update_packages(packages, forwarded):
+    command = pip_cmd() + ['install'] + forwarded + [
+        '{0}=={1}'.format(pkg['name'], pkg['latest_version']) for pkg in packages
+    ]
 
     subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
 
@@ -192,16 +218,18 @@ def get_outdated_packages(forwarded):
 
 def main():
     args, forwarded = parse_args()
+    list_args = filter_forwards(forwarded, INSTALL_ONLY)
+    install_args = filter_forwards(forwarded, LIST_ONLY)
     logger = setup_logging(args.verbose)
 
     if args.raw and args.interactive:
         raise SystemExit('--raw and --interactive cannot be used together')
 
-    outdated = get_outdated_packages(forwarded)
+    outdated = get_outdated_packages(list_args)
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
     elif args.auto:
-        update_packages(outdated)
+        update_packages(outdated, install_args)
     elif args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
@@ -216,7 +244,7 @@ def main():
                 if answer in ['y', 'a']:
                     selected.append(pkg)
         if selected:
-            update_packages(selected)
+            update_packages(selected, install_args)
 
 
 if __name__ == '__main__':

@@ -39,6 +39,28 @@ Example, run interactively, ask to upgrade for each package:
 
 Run ``pip-review -h`` for a complete overview of the options.
 
+Note: If you want to pin specific packages to prevent them from automatically
+being upgraded, you can use a constraint file (similar to ``requirements.txt``):
+
+.. code:: console
+
+    $ export PIP_CONSTRAINT="${HOME}/constraints.txt
+    $ cat $PIP_CONSTRAINT
+    pyarrow==0.14.1
+    pandas<0.24.0
+
+    $ pip-review --auto
+    ...
+
+Set this variable in ``.bashrc`` or ``.zshenv`` to make it persistent.
+Alternatively, this option can be specified in ``pip.conf``, e.g.:
+
+.. code:: console
+
+    $ cat ~/.config/pip.conf
+    [global]
+    constraint = /home/username/constraints.txt
+
 Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. This can be useful if you are using multiple versions of Python next to each other.
 
 Before version 1.0, ``pip-review`` had its own logic for finding package updates instead of relying on ``pip list --outdated``.

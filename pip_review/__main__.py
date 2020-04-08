@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import os
 import re
 import argparse
 from functools import partial
@@ -7,12 +6,10 @@ import logging
 import json
 import sys
 import pip
-import subprocess
 from packaging import version
 
 PY3 = sys.version_info.major == 3
 if PY3:  # Python3 Imports
-    import urllib.request as urllib_request
     import subprocess
 
     def check_output(*args, **kwargs):

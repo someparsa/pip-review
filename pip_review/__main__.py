@@ -6,12 +6,11 @@ import logging
 import json
 import sys
 import pip
+import subprocess
 from packaging import version
 
 PY3 = sys.version_info.major == 3
 if PY3:  # Python3 Imports
-    import subprocess
-
     def check_output(*args, **kwargs):
         process = subprocess.Popen(stdout=subprocess.PIPE, *args, **kwargs)
         output, _ = process.communicate()
@@ -23,7 +22,6 @@ if PY3:  # Python3 Imports
         return output
 
 else:  # Python2 Imports
-    import urllib2 as urllib_request
     from subprocess import check_output
     import __builtin__
     input = getattr(__builtin__, 'raw_input')

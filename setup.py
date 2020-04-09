@@ -1,7 +1,6 @@
 """
 pip-review lets you smoothly manage all available PyPI updates.
 """
-import sys
 from setuptools import setup
 
 

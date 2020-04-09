@@ -1,5 +1,4 @@
 from __future__ import absolute_import
-import os
 import re
 import argparse
 from functools import partial
@@ -12,9 +11,6 @@ from packaging import version
 
 PY3 = sys.version_info.major == 3
 if PY3:  # Python3 Imports
-    import urllib.request as urllib_request
-    import subprocess
-
     def check_output(*args, **kwargs):
         process = subprocess.Popen(stdout=subprocess.PIPE, *args, **kwargs)
         output, _ = process.communicate()
@@ -26,7 +22,6 @@ if PY3:  # Python3 Imports
         return output
 
 else:  # Python2 Imports
-    import urllib2 as urllib_request
     from subprocess import check_output
     import __builtin__
     input = getattr(__builtin__, 'raw_input')

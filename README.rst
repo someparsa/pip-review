@@ -57,13 +57,24 @@ being upgraded, you can use a constraint file (similar to ``requirements.txt``):
 Set this variable in ``.bashrc`` or ``.zshenv`` to make it persistent.
 Alternatively, this option can be specified in ``pip.conf``, e.g.:
 
+⋅⋅* Linux:
+
 .. code:: console
 
     $ cat ~/.config/pip/pip.conf
     [global]
     constraint = /home/username/constraints.txt
+    
+⋅⋅* Windows:
+
+.. code:: console
+
+    $ cat $HOME\AppData\Roaming\pip\pip.ini
+    [global]
+    constraint = '$HOME\Roaming\pip\constraints.txt'
 
 The conf file are dependent of the user, so If you use multiple users you must define config file for each of them.
+[Constraints Files Documentation](https://pip.pypa.io/en/stable/user_guide/#constraints-files "Constraints Files@User Guide")
 
 Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. This can be useful if you are using multiple versions of Python next to each other.
 

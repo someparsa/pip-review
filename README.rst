@@ -59,9 +59,11 @@ Alternatively, this option can be specified in ``pip.conf``, e.g.:
 
 .. code:: console
 
-    $ cat ~/.config/pip.conf
+    $ cat ~/.config/pip/pip.conf
     [global]
     constraint = /home/username/constraints.txt
+
+The conf file are dependent of the user, so If you use multiple users you must define config file for each of them.
 
 Since version 0.5, you can also invoke pip-review as ``python -m pip_review``. This can be useful if you are using multiple versions of Python next to each other.
 

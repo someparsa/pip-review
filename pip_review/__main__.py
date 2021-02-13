@@ -164,7 +164,7 @@ ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
 def update_packages(packages, forwarded):
-    command = pip_cmd() + ['install'] + ['-U'] + forwarded + [
+    command = pip_cmd() + ['install', '-U'] + forwarded + [
         '{0}'.format(pkg['name']) for pkg in packages
     ]
 

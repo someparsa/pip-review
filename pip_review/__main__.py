@@ -80,6 +80,12 @@ def parse_args():
     parser.add_argument(
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
+    parser.add_argument(
+        '--preview', '-p', action='store_true', default=False,
+        help='Preview update target list before execution')
+    parser.add_argument(
+        '--preview-only', '-po', action='store_true', default=False,
+        help='Preview only')
     return parser.parse_known_args()
 
 
@@ -211,6 +217,19 @@ def get_outdated_packages(forwarded):
         return packages
 
 
+def get_values_maxlength(outdated):
+    temp = (sub['name'] for sub in outdated)
+    name = max(len(elem) for elem in temp if elem is not None)
+    name = max([name, 7])
+    temp = (sub['version'] for sub in outdated)
+    version = max(len(elem) for elem in temp if elem is not None)
+    version = max([version, 7])
+    temp = (sub['latest_version'] for sub in outdated)
+    latest = max(len(elem) for elem in temp if elem is not None)
+    latest = max([latest, 6])
+    return name, version, latest
+
+
 def main():
     args, forwarded = parse_args()
     list_args = filter_forwards(forwarded, INSTALL_ONLY)
@@ -223,11 +242,23 @@ def main():
     outdated = get_outdated_packages(list_args)
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
-    elif args.auto:
-        update_packages(outdated, install_args)
+        return
     elif args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
+        return
+    elif args.preview or args.preview_only:
+        namelen, versionlen, latestlen = get_values_maxlength(outdated)
+        previewformat = '{0:<' + str(namelen) + '} {1:<' + str(versionlen) + '} {2:<' + str(latestlen) + '} {3}'
+        logger.info(previewformat.format('Package','Version','Latest','Type'))
+        logger.info('-' * namelen + ' ' + '-' * versionlen + ' ' + '-' * latestlen + ' -----')
+        for pkg in outdated:
+            logger.info(previewformat.format(pkg['name'], pkg['version'], pkg['latest_version'], pkg['latest_filetype']))
+        logger.info('-' * (namelen + versionlen + latestlen + 8))
+        if args.preview_only:
+            return
+    if args.auto:
+        update_packages(outdated, install_args)
     else:
         selected = []
         for pkg in outdated:

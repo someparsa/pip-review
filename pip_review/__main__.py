@@ -169,13 +169,14 @@ ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 def update_packages(packages, forwarded, continue_on_fail):
     upgrade_cmd = pip_cmd() + ['install', '-U'] + forwarded
     if not continue_on_fail:
-        command = upgrade_cmd + ['{0}'.format(pkg['name']) for pkg in packages]
-        subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
+        upgrade_cmd += ['{0}'.format(pkg['name']) for pkg in packages]
+        subprocess.call(upgrade_cmd, stdout=sys.stdout, stderr=sys.stderr)
         return
 
     for pkg in packages:
-        command = upgrade_cmd + ['{0}'.format(pkg['name'])]
-        subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
+        upgrade_cmd += ['{0}'.format(pkg['name'])]
+        subprocess.call(upgrade_cmd, stdout=sys.stdout, stderr=sys.stderr)
+        upgrade_cmd.pop()
 
 
 def confirm(question):

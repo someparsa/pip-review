@@ -84,7 +84,7 @@ def parse_args():
         '--continue-on-fail', '-C', action='store_true', default=False,
         help='Continue with other installs when one fails')
     parser.add_argument(
-        '--freeze-outdated-packages', '-f', action='store_true', default=False,
+        '--freeze-outdated-packages', action='store_true', default=False,
         help='Freeze all outdated packages to "requirements.txt" before upgrading them')
     return parser.parse_known_args()
 

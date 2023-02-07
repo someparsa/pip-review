@@ -45,7 +45,7 @@ Example, preview for update target list by ``pip list --outdated`` format, with 
 
     $ pip-review --interactive --preview
     Package  Version Latest Type
-    -------- ------- ------ -----
+    -----------------------------
     redis    2.4.9   2.6.2  wheel
     requests 0.13.2  0.14.0 wheel
     rq       0.3.0   0.3.4  wheel
@@ -63,7 +63,7 @@ Example, only preview for update target list:
 
     $ pip-review --preview-only
     Package  Version Latest Type
-    -------- ------- ------ -----
+    -----------------------------
     redis    2.4.9   2.6.2  wheel
     requests 0.13.2  0.14.0 wheel
     rq       0.3.0   0.3.4  wheel

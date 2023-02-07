@@ -8,6 +8,7 @@ import sys
 import pip
 import subprocess
 from packaging import version
+from operator import itemgetter
 
 PY3 = sys.version_info.major == 3
 if PY3:  # Python3 Imports
@@ -81,10 +82,16 @@ def parse_args():
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
     parser.add_argument(
+        '--continue-on-fail', '-C', action='store_true', default=False,
+        help='Continue with other installs when one fails')
+    parser.add_argument(
+        '--freeze-outdated-packages', action='store_true', default=False,
+        help='Freeze all outdated packages to "requirements.txt" before upgrading them')
+    parser.add_argument(
         '--preview', '-p', action='store_true', default=False,
         help='Preview update target list before execution')
     parser.add_argument(
-        '--preview-only', '-po', action='store_true', default=False,
+        '--preview-only', '-P', action='store_true', default=False,
         help='Preview only')
     return parser.parse_known_args()
 
@@ -169,12 +176,23 @@ class InteractiveAsker(object):
 ask_to_install = partial(InteractiveAsker().ask, prompt='Upgrade now?')
 
 
-def update_packages(packages, forwarded):
-    command = pip_cmd() + ['install', '-U'] + forwarded + [
-        '{0}'.format(pkg['name']) for pkg in packages
-    ]
+def update_packages(packages, forwarded, continue_on_fail, freeze_outdated_packages):
+    upgrade_cmd = pip_cmd() + ['install', '-U'] + forwarded
 
-    subprocess.call(command, stdout=sys.stdout, stderr=sys.stderr)
+    if freeze_outdated_packages:
+        with open('requirements.txt', 'w') as f:
+            for pkg in packages:
+                f.write('{0}=={1}\n'.format(pkg['name'], pkg['version']))
+
+    if not continue_on_fail:
+        upgrade_cmd += ['{0}'.format(pkg['name']) for pkg in packages]
+        subprocess.call(upgrade_cmd, stdout=sys.stdout, stderr=sys.stderr)
+        return
+
+    for pkg in packages:
+        upgrade_cmd += ['{0}'.format(pkg['name'])]
+        subprocess.call(upgrade_cmd, stdout=sys.stdout, stderr=sys.stderr)
+        upgrade_cmd.pop()
 
 
 def confirm(question):
@@ -217,17 +235,43 @@ def get_outdated_packages(forwarded):
         return packages
 
 
-def get_values_maxlength(outdated):
-    temp = (sub['name'] for sub in outdated)
-    name = max(len(elem) for elem in temp if elem is not None)
-    name = max([name, 7])
-    temp = (sub['version'] for sub in outdated)
-    version = max(len(elem) for elem in temp if elem is not None)
-    version = max([version, 7])
-    temp = (sub['latest_version'] for sub in outdated)
-    latest = max(len(elem) for elem in temp if elem is not None)
-    latest = max([latest, 6])
-    return name, version, latest
+# Single source of truth about columns. The remainder of the code
+# makes no assumptions about names, order or number of columns.
+COLUMNS = {
+    'Package': 'name',
+    'Version': 'version',
+    'Latest': 'latest_version',
+    'Type': 'latest_filetype',
+}
+
+# Next two functions describe how to collect data for the
+# table. Note how they are not concerned with columns widths.
+
+def extract_column(data, field, title):
+    return [title] + list(map(itemgetter(field), data))
+
+def extract_table(outdated):
+    return [
+        extract_column(outdated, field, title)
+        for title, field in COLUMNS.items()
+    ]
+
+# Next two functions describe how to format any table. Note that
+# they make no assumptions about where the data come from.
+
+def column_width(column):
+    return max(map(len, filter(None, column)))
+
+def format_table(columns):
+    widths = list(map(column_width, columns))
+    row_fmt = ' '.join(map('{{:<{}}}'.format, widths)).format
+    ruler = '-' * (sum(widths) + len(widths) - 1)
+    rows = list(map(row_fmt, *columns))
+    head = rows[0]
+    body = rows[1:]
+    return '\n'.join([head, ruler] + body + [ruler])
+
+# Clean separation of concerns, no repetition!
 
 
 def main():
@@ -243,34 +287,29 @@ def main():
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
         return
-    elif args.raw:
-        for pkg in outdated:
-            logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
-        return
-    elif args.preview or args.preview_only:
-        namelen, versionlen, latestlen = get_values_maxlength(outdated)
-        previewformat = '{0:<' + str(namelen) + '} {1:<' + str(versionlen) + '} {2:<' + str(latestlen) + '} {3}'
-        logger.info(previewformat.format('Package','Version','Latest','Type'))
-        logger.info('-' * namelen + ' ' + '-' * versionlen + ' ' + '-' * latestlen + ' -----')
-        for pkg in outdated:
-            logger.info(previewformat.format(pkg['name'], pkg['version'], pkg['latest_version'], pkg['latest_filetype']))
-        logger.info('-' * (namelen + versionlen + latestlen + 8))
+    if args.preview or args.preview_only:
+        logger.info(format_table(extract_table(outdated)))
         if args.preview_only:
             return
     if args.auto:
-        update_packages(outdated, install_args)
-    else:
-        selected = []
+        update_packages(outdated, install_args, args.continue_on_fail, args.freeze_outdated_packages)
+        return
+    if args.raw:
         for pkg in outdated:
-            logger.info('{0}=={1} is available (you have {2})'.format(
-                pkg['name'], pkg['latest_version'], pkg['version']
-            ))
-            if args.interactive:
-                answer = ask_to_install()
-                if answer in ['y', 'a']:
-                    selected.append(pkg)
-        if selected:
-            update_packages(selected, install_args)
+            logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
+        return
+
+    selected = []
+    for pkg in outdated:
+        logger.info('{0}=={1} is available (you have {2})'.format(
+            pkg['name'], pkg['latest_version'], pkg['version']
+        ))
+        if args.interactive:
+            answer = ask_to_install()
+            if answer in ['y', 'a']:
+                selected.append(pkg)
+    if selected:
+        update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
 
 
 if __name__ == '__main__':

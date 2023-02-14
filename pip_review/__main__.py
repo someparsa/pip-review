@@ -235,8 +235,7 @@ def get_outdated_packages(forwarded):
         return packages
 
 
-# Single source of truth about columns. The remainder of the code
-# makes no assumptions about names, order or number of columns.
+# Nicer headings for the columns in the oudated package table.
 COLUMNS = {
     'Package': 'name',
     'Version': 'version',
@@ -270,8 +269,6 @@ def format_table(columns):
     head = rows[0]
     body = rows[1:]
     return '\n'.join([head, ruler] + body + [ruler])
-
-# Clean separation of concerns, no repetition!
 
 
 def main():

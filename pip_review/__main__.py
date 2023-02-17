@@ -8,6 +8,7 @@ import sys
 import pip
 import subprocess
 from packaging import version
+from operator import itemgetter
 
 PY3 = sys.version_info.major == 3
 if PY3:  # Python3 Imports
@@ -86,6 +87,12 @@ def parse_args():
     parser.add_argument(
         '--freeze-outdated-packages', action='store_true', default=False,
         help='Freeze all outdated packages to "requirements.txt" before upgrading them')
+    parser.add_argument(
+        '--preview', '-p', action='store_true', default=False,
+        help='Preview update target list before execution')
+    parser.add_argument(
+        '--preview-only', '-P', action='store_true', default=False,
+        help='Preview only')
     return parser.parse_known_args()
 
 
@@ -228,6 +235,42 @@ def get_outdated_packages(forwarded):
         return packages
 
 
+# Nicer headings for the columns in the oudated package table.
+COLUMNS = {
+    'Package': 'name',
+    'Version': 'version',
+    'Latest': 'latest_version',
+    'Type': 'latest_filetype',
+}
+
+# Next two functions describe how to collect data for the
+# table. Note how they are not concerned with columns widths.
+
+def extract_column(data, field, title):
+    return [title] + list(map(itemgetter(field), data))
+
+def extract_table(outdated):
+    return [
+        extract_column(outdated, field, title)
+        for title, field in COLUMNS.items()
+    ]
+
+# Next two functions describe how to format any table. Note that
+# they make no assumptions about where the data come from.
+
+def column_width(column):
+    return max(map(len, filter(None, column)))
+
+def format_table(columns):
+    widths = list(map(column_width, columns))
+    row_fmt = ' '.join(map('{{:<{}}}'.format, widths)).format
+    ruler = '-' * (sum(widths) + len(widths) - 1)
+    rows = list(map(row_fmt, *columns))
+    head = rows[0]
+    body = rows[1:]
+    return '\n'.join([head, ruler] + body + [ruler])
+
+
 def main():
     args, forwarded = parse_args()
     list_args = filter_forwards(forwarded, INSTALL_ONLY)
@@ -240,23 +283,30 @@ def main():
     outdated = get_outdated_packages(list_args)
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
-    elif args.auto:
+        return
+    if args.preview or args.preview_only:
+        logger.info(format_table(extract_table(outdated)))
+        if args.preview_only:
+            return
+    if args.auto:
         update_packages(outdated, install_args, args.continue_on_fail, args.freeze_outdated_packages)
-    elif args.raw:
+        return
+    if args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
-    else:
-        selected = []
-        for pkg in outdated:
-            logger.info('{0}=={1} is available (you have {2})'.format(
-                pkg['name'], pkg['latest_version'], pkg['version']
-            ))
-            if args.interactive:
-                answer = ask_to_install()
-                if answer in ['y', 'a']:
-                    selected.append(pkg)
-        if selected:
-            update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
+        return
+
+    selected = []
+    for pkg in outdated:
+        logger.info('{0}=={1} is available (you have {2})'.format(
+            pkg['name'], pkg['latest_version'], pkg['version']
+        ))
+        if args.interactive:
+            answer = ask_to_install()
+            if answer in ['y', 'a']:
+                selected.append(pkg)
+    if selected:
+        update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
 
 
 if __name__ == '__main__':

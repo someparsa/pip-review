@@ -69,30 +69,62 @@ def parse_args():
         description=description,
         epilog=EPILOG+version_epilog(),
     )
+
+# ----------------------------
+
     parser.add_argument(
         '--verbose', '-v', action='store_true', default=False,
         help='Show more output')
+
+    ''' example:
+    ezdxf==1.0.2 is available (you have 0.8.0)
+    pip==23.0.1 is available (you have 22.0.4)
+    setuptools==67.3.2 is available (you have 58.1.0)
+    '''
+
     parser.add_argument(
-        '--raw', '-r', action='store_true', default=False,
+        '--raw', '-r', action='store_true', default=True,
         help='Print raw lines (suitable for passing to pip install)')
+
+    ''' example:
+    ezdxf==1.0.2
+    pip==23.0.1
+    setuptools==67.3.2
+    '''
+
     parser.add_argument(
         '--interactive', '-i', action='store_true', default=False,
         help='Ask interactively to install updates')
+
     parser.add_argument(
         '--auto', '-a', action='store_true', default=False,
         help='Automatically install every update found')
+
     parser.add_argument(
         '--continue-on-fail', '-C', action='store_true', default=False,
         help='Continue with other installs when one fails')
+
     parser.add_argument(
         '--freeze-outdated-packages', action='store_true', default=False,
         help='Freeze all outdated packages to "requirements.txt" before upgrading them')
+
     parser.add_argument(
         '--preview', '-p', action='store_true', default=False,
         help='Preview update target list before execution')
+
+    ''' exmple:
+    Package    Version Latest Type 
+    -------------------------------
+    ezdxf      0.8.0   1.0.2  wheel
+    pip        22.0.4  23.0.1 wheel
+    setuptools 58.1.0  67.3.2 wheel
+    -------------------------------
+    '''
+
     parser.add_argument(
-        '--preview-auto', '-P', action='store_true', default=False,
-        help='Preview the list of the updateable packages and updates them all.')
+        '--preview-only', '-P', action='store_true', default=False,
+        help='Preview only')
+
     return parser.parse_known_args()
 
 
@@ -235,8 +267,7 @@ def get_outdated_packages(forwarded):
         return packages
 
 
-# Single source of truth about columns. The remainder of the code
-# makes no assumptions about names, order or number of columns.
+# Nicer headings for the columns in the oudated package table.
 COLUMNS = {
     'Package': 'name',
     'Version': 'version',
@@ -271,59 +302,66 @@ def format_table(columns):
     body = rows[1:]
     return '\n'.join([head, ruler] + body + [ruler])
 
-# Clean separation of concerns, no repetition!
-
 
 def main():
     args, forwarded = parse_args()
     list_args = filter_forwards(forwarded, INSTALL_ONLY)
     install_args = filter_forwards(forwarded, LIST_ONLY)
-
-### case: --verbose
-
     logger = setup_logging(args.verbose)
-
     outdated = get_outdated_packages(list_args)
+
+# --verbose
+    if args.verbose:
+        for pkg in outdated:
+            logger.info('{0}=={1} is available (you have {2})'.format(
+                pkg['name'], pkg['latest_version'], pkg['version']
+            ))
+
+# --raw
+# --interactive
+
+    if args.raw and args.interactive:
+        raise SystemExit('--raw and --interactive cannot be used together')
+
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
+        return
 
-### case: --preview
-
-    if args.preview:
-        logger.info(format_table(extract_table(outdated)))
-
-### case: --preview-auto
-
-    if args.preview_only:
-        logger.info(format_table(extract_table(outdated)))
-
-### case: --auto
-### case: --continue-on-fail
-### case: --freeze-outdated-packages
-
-    if args.auto:
-        update_packages(outdated, install_args, args.continue_on_fail, args.freeze_outdated_packages)
-
-### case: --raw
-
+# --raw
     if args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
+        return
 
-### case: --interactive
+# --interactive
+    if args.interactive:
+        selected = []
 
-    selected = []
-    for pkg in outdated:
-        logger.info('{0}=={1} is available (you have {2})'.format(
-            pkg['name'], pkg['latest_version'], pkg['version']
-        ))
-        if args.interactive:
+        for pkg in outdated:
+            logger.info('{0}=={1} is available (you have {2})'.format(
+                pkg['name'], pkg['latest_version'], pkg['version']
+            ))
+
             answer = ask_to_install()
+
             if answer in ['y', 'a']:
                 selected.append(pkg)
-    if selected:
-        update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
 
+        if selected:
+            update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
+
+# --auto
+    if args.auto:
+        update_packages(outdated, install_args, args.continue_on_fail, args.freeze_outdated_packages)
+        return
+
+# --preview
+    if args.preview:
+        logger.info(format_table(extract_table(outdated)))
+
+# --preview-only
+    if args.preview_only:
+        return
 
 if __name__ == '__main__':
     try:

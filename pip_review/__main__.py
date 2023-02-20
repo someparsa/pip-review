@@ -83,7 +83,7 @@ def parse_args():
     '''
 
     parser.add_argument(
-        '--raw', '-r', action='store_true', default=True,
+        '--raw', '-r', action='store_true', default=False,
         help='Print raw lines (suitable for passing to pip install)')
 
     ''' example:
@@ -122,8 +122,8 @@ def parse_args():
     '''
 
     parser.add_argument(
-        '--preview-only', '-P', action='store_true', default=False,
-        help='Preview only')
+        '--visual', '-s', action='store_true', default=False,
+        help='Interactively select the packages for update, see a visual report and do the updates')
 
     return parser.parse_known_args()
 
@@ -360,7 +360,35 @@ def main():
         logger.info(format_table(extract_table(outdated)))
 
 # --preview-only
-    if args.preview_only:
+    if args.visual:
+        selected = []
+
+        for pkg in outdated:
+            logger.info('{0}=={1} is available (you have {2})'.format(
+                pkg['name'], pkg['latest_version'], pkg['version']
+            ))
+
+            answer = ask_to_install()
+
+            if answer in ['y', 'a']:
+                selected.append(pkg)
+
+        if not selected:
+            logger.info('No packages selected for update / upgrade')
+            return
+
+        if selected:
+            logger.info('Selected packages for update / upgrade are')
+            logger.info(format_table(extract_table(selected)))
+
+            answer = ask_to_install()
+
+            if answer in ['y', 'a']:
+                update_packages(selected, install_args, args.continue_on_fail, args.freeze_outdated_packages)
+            
+            else:
+                logger.info('You chose to quit the update process')
+
         return
 
 if __name__ == '__main__':

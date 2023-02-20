@@ -91,8 +91,8 @@ def parse_args():
         '--preview', '-p', action='store_true', default=False,
         help='Preview update target list before execution')
     parser.add_argument(
-        '--preview-only', '-P', action='store_true', default=False,
-        help='Preview only')
+        '--preview-auto', '-P', action='store_true', default=False,
+        help='Preview the list of the updateable packages and updates them all.')
     return parser.parse_known_args()
 
 
@@ -235,7 +235,8 @@ def get_outdated_packages(forwarded):
         return packages
 
 
-# Nicer headings for the columns in the oudated package table.
+# Single source of truth about columns. The remainder of the code
+# makes no assumptions about names, order or number of columns.
 COLUMNS = {
     'Package': 'name',
     'Version': 'version',
@@ -270,31 +271,46 @@ def format_table(columns):
     body = rows[1:]
     return '\n'.join([head, ruler] + body + [ruler])
 
+# Clean separation of concerns, no repetition!
+
 
 def main():
     args, forwarded = parse_args()
     list_args = filter_forwards(forwarded, INSTALL_ONLY)
     install_args = filter_forwards(forwarded, LIST_ONLY)
-    logger = setup_logging(args.verbose)
 
-    if args.raw and args.interactive:
-        raise SystemExit('--raw and --interactive cannot be used together')
+### case: --verbose
+
+    logger = setup_logging(args.verbose)
 
     outdated = get_outdated_packages(list_args)
     if not outdated and not args.raw:
         logger.info('Everything up-to-date')
-        return
-    if args.preview or args.preview_only:
+
+### case: --preview
+
+    if args.preview:
         logger.info(format_table(extract_table(outdated)))
-        if args.preview_only:
-            return
+
+### case: --preview-auto
+
+    if args.preview_only:
+        logger.info(format_table(extract_table(outdated)))
+
+### case: --auto
+### case: --continue-on-fail
+### case: --freeze-outdated-packages
+
     if args.auto:
         update_packages(outdated, install_args, args.continue_on_fail, args.freeze_outdated_packages)
-        return
+
+### case: --raw
+
     if args.raw:
         for pkg in outdated:
             logger.info('{0}=={1}'.format(pkg['name'], pkg['latest_version']))
-        return
+
+### case: --interactive
 
     selected = []
     for pkg in outdated:
